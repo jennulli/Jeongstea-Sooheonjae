@@ -66,6 +66,8 @@
             margin: 0 auto;
             padding-top: 30px;
             padding-bottom: 80px;
+            display: flex;
+            flex-direction: column;
         }
 
         .brush-title-wrapper {
@@ -86,7 +88,7 @@
 
         .landing-store {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: space-between;
             margin-bottom: 40px;
             cursor: pointer;
@@ -95,8 +97,8 @@
         .landing-text-vertical {
             writing-mode: vertical-rl;
             text-orientation: upright;
-            font-size: 2.0rem;
-            letter-spacing: 15px;
+            font-size: 1.4rem;
+            letter-spacing: 3px;
             font-weight: bold;
             margin-top: 0;
         }
@@ -127,7 +129,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 20px 0;
+            margin: 40px 0;
         }
         .landing-divider::after {
             content: "○";
@@ -281,6 +283,9 @@
             text-align: center;
             background-color: var(--bg-color);
         }
+        .input-box::placeholder {
+            font-size: 0.85rem;
+        }
         .input-box:focus {
             outline: none;
             border-color: var(--text-main);
@@ -377,18 +382,21 @@
 
         /* 모바일 대응 (반응형) */
         @media (max-width: 600px) {
-            .landing-text-vertical { font-size: 1.1rem; }
+            .header { font-size: 1.15rem; }
+            .back-btn { left: 10px; font-size: 1.2rem; }
+            .calendar-grid { min-width: 100%; }
+            .landing-text-vertical { font-size: 0.95rem; }
             .brush-title { font-size: 1.2rem; }
-            .brush-title-wrapper { margin-bottom: 30px; }
+            .brush-title-wrapper { margin-bottom: 50px; }
             .landing-image { width: calc(50% - 10px); }
             .landing-image.suhyun-img { width: calc(50% - 10px); }
-            .badge { font-size: 0.55rem; padding: 1px; line-height: 1.1; letter-spacing: -0.5px; }
+            .badge { font-size: 0.5rem; padding: 1px; line-height: 1.1; letter-spacing: -0.5px; word-break: break-all; }
             .cal-day-cell { padding: 1px; min-height: 40px; }
             .date-num { font-size: 0.7rem; }
             .cal-head-cell { font-size: 0.75rem; padding-bottom: 4px; }
-            h2 { font-size: 1.0rem; margin-bottom: 12px; }
-            .total-title-row { flex-direction: column; align-items: flex-start; gap: 8px; }
-            .total-btn { align-self: flex-end; padding: 4px 8px; font-size: 0.85rem; }
+            h2 { font-size: 0.9rem; margin-bottom: 12px; }
+            .total-title-row { flex-direction: row; justify-content: space-between; align-items: center; gap: 8px; }
+            .total-btn { padding: 4px 8px; font-size: 0.85rem; }
             .employee-grid { gap: 6px; }
             .emp-btn { padding: 8px 4px; font-size: 0.85rem; }
             .card { padding: 12px; }
@@ -415,11 +423,11 @@
 
         <div class="landing-store" onclick="selectStore('jungcha', '정이 있는 차')">
             <div class="landing-text-vertical">
-                <span class="char-fade" style="animation-delay: 0.2s; display:block;">정</span>
-                <span class="char-fade" style="animation-delay: 0.4s; display:block;">이</span>
-                <span class="char-fade" style="animation-delay: 0.6s; display:block;">있</span>
-                <span class="char-fade" style="animation-delay: 0.8s; display:block;">는</span>
-                <span class="char-fade" style="animation-delay: 1.0s; display:block;">차</span>
+                <span class="char-fade" style="animation-delay: 0.2s;">정</span>
+                <span class="char-fade" style="animation-delay: 0.4s;">이</span>
+                <span class="char-fade" style="animation-delay: 0.6s;">있</span>
+                <span class="char-fade" style="animation-delay: 0.8s;">는</span>
+                <span class="char-fade" style="animation-delay: 1.0s;">차</span>
             </div>
             <img src="정차.png" class="landing-image char-fade" style="animation-delay: 1.4s;" alt="정이 있는 차">
         </div>
@@ -429,9 +437,9 @@
         <div class="landing-store" onclick="selectStore('suhyun', '수헌재')">
             <img src="수헌재.png" class="landing-image suhyun-img char-fade" style="animation-delay: 1.8s;" alt="수헌재">
             <div class="landing-text-vertical" style="text-align: right;">
-                <span class="char-fade" style="animation-delay: 2.2s; display:block;">수</span>
-                <span class="char-fade" style="animation-delay: 2.4s; display:block;">헌</span>
-                <span class="char-fade" style="animation-delay: 2.6s; display:block;">재</span>
+                <span class="char-fade" style="animation-delay: 2.2s;">수</span>
+                <span class="char-fade" style="animation-delay: 2.4s;">헌</span>
+                <span class="char-fade" style="animation-delay: 2.6s;">재</span>
             </div>
         </div>
     </div>
@@ -522,7 +530,6 @@
                     <button class="break-btn active" onclick="setBreakTime(0, this)">없음</button>
                     <button class="break-btn" onclick="setBreakTime(0.5, this)">0.5</button>
                     <button class="break-btn" onclick="setBreakTime(1.0, this)">1.0</button>
-                    <button class="break-btn" onclick="setBreakTime(1.5, this)">1.5</button>
                 </div>
             </div>
 
@@ -683,6 +690,38 @@
         }
         migrateLocalData();
 
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash;
+            document.getElementById('landing-view').style.display = 'none';
+            document.getElementById('main-view').style.display = 'none';
+            document.getElementById('detail-view').style.display = 'none';
+            document.getElementById('total-view').style.display = 'none';
+            document.getElementById('main-header').style.display = 'none';
+
+            if(hash === '#main') {
+                document.getElementById('main-header').style.display = 'flex';
+                document.getElementById('main-view').style.display = 'flex';
+                if(currentStoreId) {
+                    window.renderCalendar(currentStoreId);
+                    window.renderEmployeeList(currentStoreId);
+                }
+            } else if(hash === '#detail') {
+                document.getElementById('main-header').style.display = 'flex';
+                document.getElementById('detail-view').style.display = 'flex';
+            } else if(hash === '#total') {
+                document.getElementById('main-header').style.display = 'flex';
+                document.getElementById('total-view').style.display = 'flex';
+            } else {
+                document.getElementById('landing-view').style.display = 'flex';
+            }
+        });
+        
+        if(!window.location.hash) {
+            window.location.hash = '#landing';
+        } else {
+            window.dispatchEvent(new Event('hashchange'));
+        }
+
         function refreshUI() {
             if (document.getElementById('main-view').style.display === 'flex') {
                 window.renderCalendar(currentStoreId);
@@ -705,25 +744,13 @@
         }
 
         window.goHome = function() {
-            document.getElementById('main-header').style.display = 'none';
-            document.getElementById('landing-view').style.display = 'flex';
-            document.getElementById('main-view').style.display = 'none';
-            document.getElementById('detail-view').style.display = 'none';
-            document.getElementById('total-view').style.display = 'none';
+            window.location.hash = '#landing';
         }
 
         window.selectStore = function(storeId, storeName) {
             currentStoreId = storeId;
             document.getElementById('header-title').innerText = storeName + ' 근무 관리';
-            
-            document.getElementById('main-header').style.display = 'block';
-            document.getElementById('landing-view').style.display = 'none';
-            document.getElementById('detail-view').style.display = 'none';
-            document.getElementById('total-view').style.display = 'none';
-            document.getElementById('main-view').style.display = 'flex';
-            
-            window.renderCalendar(storeId);
-            window.renderEmployeeList(storeId);
+            window.location.hash = '#main';
         }
 
         window.renderCalendar = function(storeId) {
@@ -735,7 +762,7 @@
 
             const schedules = storeData[storeId].schedules;
             for (let i = 1; i <= 30; i++) {
-                let isToday = (i === 7) ? 'today' : '';
+                let isToday = (i === new Date().getDate()) ? 'today' : '';
                 let dayOfWeek = new Date(`2026-06-${i.toString().padStart(2, '0')}`).getDay();
                 let colorClass = dayOfWeek === 0 ? 'sunday' : (dayOfWeek === 6 ? 'saturday' : '');
                 
@@ -813,21 +840,16 @@
 
             window.updateSummaryTable();
 
-            document.getElementById('main-view').style.display = 'none';
-            document.getElementById('detail-view').style.display = 'flex';
+            window.location.hash = '#detail';
             window.scrollTo(0, 0);
         }
 
         window.goBackToMainFromDetail = function() {
-            document.getElementById('detail-view').style.display = 'none';
-            document.getElementById('main-view').style.display = 'flex';
-            window.renderCalendar(currentStoreId);
+            window.history.back();
         }
 
         window.goBackToMainFromTotal = function() {
-            document.getElementById('total-view').style.display = 'none';
-            document.getElementById('main-view').style.display = 'flex';
-            window.renderCalendar(currentStoreId);
+            window.history.back();
         }
 
         window.updateSummaryTable = function() {
@@ -962,8 +984,7 @@
         }
 
         window.openTotalView = function() {
-            document.getElementById('main-view').style.display = 'none';
-            document.getElementById('total-view').style.display = 'flex';
+            window.location.hash = '#total';
             window.scrollTo(0, 0);
 
             const empData = {};
