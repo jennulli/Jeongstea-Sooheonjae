@@ -111,8 +111,9 @@
         }
 
         .landing-image {
-            width: 450px;
-            height: 300px;
+            width: calc(50% - 15px);
+            height: auto;
+            aspect-ratio: 4/3;
             object-fit: cover;
             object-position: right center;
             filter: brightness(0.75) contrast(1.05);
@@ -379,6 +380,30 @@
             padding: 14px 28px;
             font-size: 1.1rem;
             z-index: 1000;
+        }
+
+        /* 모바일 대응 (반응형) */
+        @media (max-width: 600px) {
+            .landing-text-vertical { font-size: 1.4rem; }
+            .brush-title { font-size: 1.4rem; }
+            .brush-title-wrapper { margin-bottom: 30px; }
+            .landing-image { width: calc(50% - 10px); }
+            .landing-image.suhyun-img { width: calc(50% - 10px); }
+            .badge { font-size: 0.55rem; padding: 1px; line-height: 1.1; letter-spacing: -0.5px; }
+            .cal-day-cell { padding: 1px; min-height: 40px; }
+            .date-num { font-size: 0.7rem; }
+            .cal-head-cell { font-size: 0.75rem; padding-bottom: 4px; }
+            h2 { font-size: 1.1rem; margin-bottom: 15px; }
+            .total-title-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .total-btn { align-self: flex-end; padding: 6px 12px; font-size: 0.9rem; }
+            .employee-grid { gap: 6px; }
+            .emp-btn { padding: 8px 4px; font-size: 0.95rem; }
+            .card { padding: 15px; }
+            .container { width: 95%; padding-top: 20px; }
+            .input-row { flex-wrap: wrap; }
+            .input-box { font-size: 1rem; padding: 8px; }
+            .action-btn { font-size: 1.05rem; padding: 12px; }
+            .summary-table th, .summary-table td { font-size: 0.8rem; padding: 8px 4px; }
         }
     </style>
 </head>
