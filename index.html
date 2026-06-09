@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>정차/수헌재 근무 관리</title>
+    <style>
+        @font-face {
+            font-family: 'Gowun Batang';
+            src: url('GowunBatang-Regular.ttf') format('truetype');
+        }
+
+        :root {
+            --bg-color: #FFFFFF;
+            --text-main: #111111;
+            --text-light: #555555;
+            --border-color: #DDDDDD;
+            --accent-color: #000000;
+        }
+
+        body {
+            font-family: 'Gowun Batang', serif;
+            margin: 0;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header {
+            width: 100%;
+            padding: 20px 0;
+            text-align: center;
+            font-size: 1.25rem;
+            position: relative;
+            display: none; 
+        }
+
+        .back-btn {
+            position: absolute;
+            left: 20px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            cursor: pointer;
+            font-family: 'Gowun Batang', serif;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            padding-bottom: 40px;
+            padding-top: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* 랜딩 뷰 스타일 */
+        #landing-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 50px;
+            margin-top: 20px;
+            max-width: 900px;
+        }
+
+        .brush-title-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 60px; /* 타이틀과 첫 번째 사진 사이 간격 늘림 */
+        }
+
+        .brush-title {
+            font-size: 2rem;
+            font-weight: bold;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .char-fade {
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards; /* 애니메이션 부드럽고 천천히 */
+        }
+
+        .landing-store {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            width: 100%;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+        .landing-store:active { opacity: 0.6; }
+
+        .landing-text-vertical {
+            font-size: 2.0rem; /* 글자 크기 살짝 줄임 (기존 2.2 -> 2.0) */
+            font-weight: bold;
+            line-height: 1.5;
+            text-align: center;
+            margin-top: 0;
+        }
+
+        .landing-image {
+            width: 450px;
+            height: 300px;
+            object-fit: cover;
+            object-position: right center;
+            filter: brightness(0.75) contrast(1.05);
+        }
+
+        /* 수헌재 이미지 너비 완벽 정렬 (잘림 방지) */
+        .landing-image.suhyun-img {
+            width: calc(50% - 15px); /* 파란색 선 시안과 완벽하게 일치 */
+            height: auto;
+            display: block;
+        }
+
+        .landing-divider {
+            width: 100%;
+            height: 1px;
+            background-color: var(--text-main);
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .landing-divider::after {
+            content: "○";
+            position: absolute;
+            background-color: var(--bg-color);
+            padding: 0 10px;
+            font-size: 0.8rem;
+        }
+
+        #main-view, #detail-view, #total-view { display: none; }
+
+        .card {
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            background-color: #FFFFFF;
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            margin-top: 0;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .total-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .month-header {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .total-btn {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--text-main);
+            padding: 6px 14px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Gowun Batang', serif;
+        }
+        .total-btn:active { background-color: var(--text-main); color: white; }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .cal-head-cell {
+            text-align: center;
+            font-size: 0.8rem;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 4px;
+        }
+
+        .cal-day-cell {
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 2px;
+            border: 1px solid #EEEEEE;
+        }
+
+        .date-num {
+            font-size: 0.8rem;
+            margin-bottom: 2px;
+        }
+        .date-num.sunday { color: #D32F2F; }
+        .date-num.saturday { color: #1976D2; }
+
+        .badge {
+            background-color: #F5F5F5;
+            padding: 2px;
+            font-size: 0.65rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            line-height: 1.2;
+        }
+
+        .employee-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .emp-btn {
+            background-color: #FFFFFF;
+            border: 1px solid var(--text-main);
+            padding: 12px 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-family: 'Gowun Batang', serif;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .emp-btn:active { background-color: var(--text-main); color: #FFFFFF; }
+
+        .form-group { margin-bottom: 24px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        .input-box {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            font-size: 1.1rem;
+            box-sizing: border-box;
+            outline: none;
+            font-family: 'Gowun Batang', serif;
+            background-color: transparent;
+        }
+        .input-row { display: flex; gap: 10px; align-items: center; }
+
+        .break-time-group { display: flex; gap: 10px; }
+        .break-btn {
+            flex: 1;
+            padding: 12px 0;
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-color);
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-family: 'Gowun Batang', serif;
+        }
+        .break-btn.active {
+            background-color: var(--text-main);
+            color: #FFFFFF;
+            border-color: var(--text-main);
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 16px;
+            border: 1px solid var(--text-main);
+            background-color: var(--text-main);
+            color: #FFFFFF;
+            font-size: 1.2rem;
+            cursor: pointer;
+            font-family: 'Gowun Batang', serif;
+            margin-top: 10px;
+        }
+        .action-btn:active { background-color: #333333; }
+        
+        .action-btn.secondary {
+            background-color: #FFFFFF;
+            color: var(--text-main);
+            margin-top: 10px;
+        }
+        .action-btn.secondary:active { background-color: #F5F5F5; }
+
+        .btn-edit {
+            background-color: transparent;
+            border: 1px solid var(--text-main);
+            color: var(--text-main);
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: 'Gowun Batang', serif;
+        }
+        .btn-edit:active { background-color: #EEEEEE; }
+
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            font-size: 1.2rem;
+            display: none;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .summary-table th, .summary-table td {
+            padding: 12px 6px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+        .summary-table th { font-weight: bold; border-bottom: 2px solid var(--text-main); }
+
+        .total-box {
+            margin-top: 20px;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        /* 아코디언 관련 스타일 */
+        .accordion-item {
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 0;
+            font-size: 1.1rem;
+        }
+        .accordion-header {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+        .accordion-header .emp-name {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .accordion-header .arrow {
+            margin-left: 8px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+        .accordion-body {
+            display: none;
+            padding: 16px 0 0 10px;
+            font-size: 0.95rem;
+            color: var(--text-light);
+            line-height: 1.7;
+        }
+
+        #toast {
+            display: none;
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--text-main);
+            color: white;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header" id="main-header">
+        <button class="back-btn" id="back-btn" onclick="goHome()">〈</button>
+        <span id="header-title">근무 관리</span>
+    </div>
+
+    <!-- 1. 랜딩 뷰 -->
+    <div id="landing-view" class="container">
+        <div class="brush-title-wrapper">
+            <div class="brush-title">정차/수헌재 근무 관리</div>
+        </div>
+
+        <div class="landing-store" onclick="selectStore('jungcha', '정이 있는 차')">
+            <div class="landing-text-vertical">
+                <span class="char-fade" style="animation-delay: 0.2s; display:block;">정</span>
+                <span class="char-fade" style="animation-delay: 0.4s; display:block;">이</span>
+                <span class="char-fade" style="animation-delay: 0.6s; display:block;">있</span>
+                <span class="char-fade" style="animation-delay: 0.8s; display:block;">는</span>
+                <span class="char-fade" style="animation-delay: 1.0s; display:block;">차</span>
+            </div>
+            <img src="정차.png" class="landing-image char-fade" style="animation-delay: 1.4s;" alt="정이 있는 차">
+        </div>
+
+        <div class="landing-divider"></div>
+
+        <div class="landing-store" onclick="selectStore('suhyun', '수헌재')">
+            <img src="수헌재.png" class="landing-image suhyun-img char-fade" style="animation-delay: 1.8s;" alt="수헌재">
+            <div class="landing-text-vertical" style="text-align: right;">
+                <span class="char-fade" style="animation-delay: 2.2s; display:block;">수</span>
+                <span class="char-fade" style="animation-delay: 2.4s; display:block;">헌</span>
+                <span class="char-fade" style="animation-delay: 2.6s; display:block;">재</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 메인 뷰 (달력 + 직원) -->
+    <div id="main-view" class="container">
+        <div class="card">
+            <div class="month-header">
+                <span style="margin-right: 15px;">◀</span>
+                <span>2026년 6월 스케줄</span>
+                <span style="margin-left: 15px;">▶</span>
+            </div>
+            <div style="overflow-x: auto;">
+                <div class="calendar-grid" id="calendar-grid"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="total-title-row">
+                <h2 style="margin: 0; border: none; padding: 0;">근무 시간 입력 (직원 선택)</h2>
+                <button class="total-btn" onclick="openTotalView()">전체 근무 시간</button>
+            </div>
+            <div class="employee-grid" id="employee-list"></div>
+        </div>
+    </div>
+
+    <!-- 3. 상세 입력 뷰 (요약 + 폼 통합) -->
+    <div id="detail-view" class="container">
+        
+        <div class="card" style="margin-bottom: 24px;">
+            <h2 id="selected-employee-name" style="margin-bottom: 5px;">직원 이름</h2>
+            <p style="margin-bottom: 10px; font-size: 1rem;">나의 근무 요약</p>
+            <table class="summary-table">
+                <thead>
+                    <tr><th>날짜</th><th>매장</th><th>근무 시간</th><th>관리</th></tr>
+                </thead>
+                <tbody id="summary-table-body">
+                    <!-- JS 랜더링 -->
+                </tbody>
+            </table>
+            <div class="total-box" id="summary-total-box">
+                총 누적 근무: <span style="font-weight:bold;">0</span> 시간
+            </div>
+        </div>
+
+        <div class="card" id="form-card">
+            <h2>근무 시간 입력</h2>
+            
+            <div class="form-group">
+                <label>날짜 입력</label>
+                <div class="input-row">
+                    <input type="number" id="input-month" class="input-box" min="1" max="12" placeholder="월" value="6">
+                    <span>월</span>
+                    <input type="number" id="input-day" class="input-box" min="1" max="31" placeholder="일" value="7">
+                    <span>일</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>출근 시간</label>
+                <div class="input-row">
+                    <input type="number" id="start-hour" class="input-box" min="0" max="24" placeholder="시 (예: 10)" oninput="calculateTime()">
+                    <span>:</span>
+                    <input type="number" id="start-min" class="input-box" min="0" max="59" placeholder="분 (예: 30)" oninput="calculateTime()">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>퇴근 시간</label>
+                <div class="input-row">
+                    <input type="number" id="end-hour" class="input-box" min="0" max="24" placeholder="시 (예: 19)" oninput="calculateTime()">
+                    <span>:</span>
+                    <input type="number" id="end-min" class="input-box" min="0" max="59" placeholder="분 (예: 0)" oninput="calculateTime()">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>휴게 시간 (시간)</label>
+                <div class="break-time-group">
+                    <button type="button" class="break-btn active" onclick="setBreakTime(0, this)">0</button>
+                    <button type="button" class="break-btn" onclick="setBreakTime(0.5, this)">0.5</button>
+                    <button type="button" class="break-btn" onclick="setBreakTime(1, this)">1</button>
+                </div>
+            </div>
+
+            <div id="result-box" class="result-box">
+                총 <span id="total-hours" style="font-weight:bold;">0</span>시간
+            </div>
+
+            <button class="action-btn" onclick="saveRecord()">입력 내역 저장하기</button>
+            <button class="action-btn secondary" onclick="goBackToMainFromDetail()">직원 선택으로 돌아가기</button>
+        </div>
+    </div>
+
+    <!-- 4. TOTAL 아코디언 뷰 -->
+    <div id="total-view" class="container">
+        <div class="card">
+            <h2>전체 직원 근무 내역 요약</h2>
+            <p style="margin-bottom: 20px; font-size: 0.95rem; color: #555;">직원 이름을 터치하면 상세 내역이 펼쳐집니다.</p>
+            
+            <div id="total-list-container">
+                <!-- JS 렌더링 -->
+            </div>
+
+            <button class="action-btn secondary" style="margin-top: 30px;" onclick="goBackToMainFromTotal()">달력으로 돌아가기</button>
+        </div>
+    </div>
+
+    <div id="toast">메시지</div>
+
+    <script>
+        const storeData = {
+            'jungcha': {
+                employees: ['김도윤', '송윤서', '이채이', '김아린', '서예은', '이승현', '이나연', '홍정연', '박다원'],
+                schedules: {
+                    1: [{n: '김아린', t: '11.3~7', h: '6.5'}, {n: '서예은', t: '11~7', h: '7'}, {n: '이승현', t: '10~7', h: '8'}],
+                    2: [{n: '이나연', t: '12~7', h: '6'}, {n: '홍정연', t: '10~7', h: '8'}],
+                    3: [{n: '박다원', t: '10~7', h: '8'}, {n: '홍정연', t: '11.3~6.3', h: '6'}],
+                    4: [{n: '김아린', t: '10~7', h: '8'}, {n: '박다원', t: '12~7', h: '6'}, {n: '이승현', t: '10~4', h: '5'}],
+                    5: [{n: '서예은', t: '12~7', h: '6'}, {n: '이나연', t: '10~7', h: '8'}],
+                    6: [{n: '김도윤', t: '11.3~7', h: '6.5'}, {n: '송윤서', t: '10~7', h: '8'}, {n: '이채이', t: '13~7', h: '5'}],
+                    7: [{n: '김도윤', t: '11~7', h: '7'}, {n: '송윤서', t: '10~5.3', h: '6.5'}, {n: '이채이', t: '13~7', h: '5'}],
+                    8: [{n: '김아린', t: '11.3~7', h: '6.5'}, {n: '서예은', t: '11~7', h: '7'}, {n: '이승현', t: '10~7', h: '8'}],
+                    9: [{n: '이나연', t: '12~7', h: '6'}, {n: '홍정연', t: '10~7', h: '8'}],
+                    10: [{n: '박다원', t: '10~7', h: '8'}, {n: '홍정연', t: '11.3~6.3', h: '6'}],
+                    11: [{n: '김아린', t: '10~7', h: '8'}, {n: '박다원', t: '12~7', h: '6'}, {n: '이승현', t: '10~4', h: '5'}],
+                    12: [{n: '서예은', t: '12~7', h: '6'}, {n: '이나연', t: '10~7', h: '8'}],
+                    13: [{n: '김도윤', t: '11.3~7', h: '6.5'}, {n: '송윤서', t: '10~7', h: '8'}, {n: '이채이', t: '13~7', h: '5'}],
+                    14: [{n: '김도윤', t: '11~7', h: '7'}, {n: '송윤서', t: '10~5.3', h: '6.5'}, {n: '이채이', t: '13~7', h: '5'}],
+                    15: [{n: '김아린', t: '11.3~7', h: '6.5'}, {n: '서예은', t: '11~7', h: '7'}, {n: '이승현', t: '10~7', h: '8'}],
+                    16: [{n: '이나연', t: '12~7', h: '6'}, {n: '홍정연', t: '10~7', h: '8'}],
+                    17: [{n: '박다원', t: '10~7', h: '8'}, {n: '홍정연', t: '11.3~6.3', h: '6'}],
+                    18: [{n: '김아린', t: '10~7', h: '8'}, {n: '박다원', t: '12~7', h: '6'}, {n: '이승현', t: '10~4', h: '5'}],
+                    19: [{n: '서예은', t: '12~7', h: '6'}, {n: '이나연', t: '10~7', h: '8'}],
+                    20: [{n: '김도윤', t: '11.3~7', h: '6.5'}, {n: '송윤서', t: '10~7', h: '8'}, {n: '이채이', t: '13~7', h: '5'}],
+                    21: [{n: '김도윤', t: '11~7', h: '7'}, {n: '송윤서', t: '10~5.3', h: '6.5'}, {n: '이채이', t: '13~7', h: '5'}],
+                    22: [{n: '김아린', t: '11.3~7', h: '6.5'}, {n: '서예은', t: '11~7', h: '7'}, {n: '이승현', t: '10~7', h: '8'}],
+                    23: [{n: '이나연', t: '12~7', h: '6'}, {n: '홍정연', t: '10~7', h: '8'}],
+                    24: [{n: '박다원', t: '10~7', h: '8'}, {n: '홍정연', t: '11.3~6.3', h: '6'}],
+                    25: [{n: '김아린', t: '10~7', h: '8'}, {n: '박다원', t: '12~7', h: '6'}, {n: '이승현', t: '10~4', h: '5'}],
+                    26: [{n: '서예은', t: '12~7', h: '6'}, {n: '이나연', t: '10~7', h: '8'}],
+                    27: [{n: '김도윤', t: '11.3~7', h: '6.5'}, {n: '송윤서', t: '10~7', h: '8'}, {n: '이채이', t: '13~7', h: '5'}],
+                    28: [{n: '김도윤', t: '11~7', h: '7'}, {n: '송윤서', t: '10~5.3', h: '6.5'}, {n: '이채이', t: '13~7', h: '5'}],
+                    29: [{n: '김아린', t: '11.3~7', h: '6.5'}, {n: '서예은', t: '11~7', h: '7'}, {n: '이승현', t: '10~7', h: '8'}],
+                    30: [{n: '이나연', t: '12~7', h: '6'}, {n: '홍정연', t: '10~7', h: '8'}]
+                }
+            },
+            'suhyun': {
+                employees: ['김나현', '박소정', '이율리', '정유빈', '신예지', '조혜나', '주시연', '민시우', '설지현', '송윤서'],
+                schedules: {
+                    1: [{n: '김나현', t: '10~7', h: '8'}, {n: '송윤서', t: '10~7', h: '8'}],
+                    2: [{n: '신예지', t: '12~4.3', h: '4'}, {n: '조혜나', t: '11~4', h: '4'}, {n: '주시연', t: '12~7', h: '6'}],
+                    3: [{n: '설지현', t: '10~6.3', h: '7.5'}, {n: '조혜나', t: '11~4', h: '4'}],
+                    4: [{n: '설지현', t: '11~7', h: '7'}, {n: '신예지', t: '12~7', h: '6'}],
+                    5: [{n: '민시우', t: '10~7', h: '8'}, {n: '정유빈', t: '10.3~7', h: '7.5'}, {n: '주시연', t: '11~7', h: '7'}],
+                    6: [{n: '박소정', t: '11.3~7', h: '6.5'}, {n: '이율리', t: '10~7', h: '8'}],
+                    7: [{n: '박소정', t: '10~7', h: '8'}, {n: '이율리', t: '11.3~7', h: '6.5'}, {n: '정유빈', t: '11~7', h: '7'}],
+                    8: [{n: '김나현', t: '10~7', h: '8'}, {n: '송윤서', t: '11.3~7', h: '6.5'}],
+                    9: [{n: '송윤서', t: '10~6', h: '7'}, {n: '조혜나', t: '11~4', h: '4'}, {n: '주시연', t: '10~7', h: '8'}],
+                    10: [{n: '설지현', t: '10~6.3', h: '7.5'}, {n: '조혜나', t: '11~4', h: '4'}],
+                    11: [{n: '설지현', t: '11~7', h: '7'}, {n: '신예지', t: '12~7', h: '6'}],
+                    12: [{n: '민시우', t: '9~6', h: '8'}, {n: '신예지', t: '12~7', h: '6'}, {n: '정유빈', t: '10.3~7', h: '7.5'}, {n: '주시연', t: '12~7', h: '6'}],
+                    13: [{n: '박소정', t: '11.3~7', h: '6.5'}, {n: '이율리', t: '10~7', h: '8'}],
+                    14: [{n: '김나현', t: '11.3~6', h: '5.5'}, {n: '박소정', t: '10~7', h: '8'}, {n: '이율리', t: '11.3~7', h: '6.5'}, {n: '정유빈', t: '11~7', h: '7'}],
+                    15: [{n: '김나현', t: '10~7', h: '8'}, {n: '송윤서', t: '11.3~7', h: '6.5'}],
+                    16: [{n: '송윤서', t: '10~6', h: '7'}, {n: '조혜나', t: '11~4', h: '4'}, {n: '주시연', t: '10~7', h: '8'}],
+                    17: [{n: '설지현', t: '10~6.3', h: '7.5'}, {n: '조혜나', t: '11~4', h: '4'}],
+                    18: [{n: '설지현', t: '11~7', h: '7'}, {n: '신예지', t: '12~7', h: '6'}],
+                    19: [{n: '민시우', t: '10~7', h: '8'}, {n: '신예지', t: '12~7', h: '6'}, {n: '정유빈', t: '10.3~7', h: '7.5'}, {n: '주시연', t: '12~7', h: '6'}],
+                    20: [{n: '박소정', t: '11.3~7', h: '6.5'}, {n: '이율리', t: '10~7', h: '8'}],
+                    21: [{n: '김나현', t: '11.3~6', h: '5.5'}, {n: '박소정', t: '10~7', h: '8'}, {n: '이율리', t: '11.3~7', h: '6.5'}, {n: '정유빈', t: '11~7', h: '7'}],
+                    22: [{n: '김나현', t: '10~7', h: '8'}, {n: '송윤서', t: '11.3~7', h: '6.5'}],
+                    23: [{n: '송윤서', t: '10~6', h: '7'}, {n: '조혜나', t: '11~4', h: '4'}, {n: '주시연', t: '10~7', h: '8'}],
+                    24: [{n: '설지현', t: '10~6.3', h: '7.5'}, {n: '조혜나', t: '11~4', h: '4'}],
+                    25: [{n: '설지현', t: '11~7', h: '7'}, {n: '신예지', t: '12~7', h: '6'}],
+                    26: [{n: '민시우', t: '10~7', h: '8'}, {n: '신예지', t: '12~7', h: '6'}, {n: '정유빈', t: '10.3~7', h: '7.5'}, {n: '주시연', t: '12~7', h: '6'}],
+                    27: [{n: '박소정', t: '11.3~7', h: '6.5'}, {n: '이율리', t: '10~7', h: '8'}],
+                    28: [{n: '김나현', t: '11.3~6', h: '5.5'}, {n: '박소정', t: '10~7', h: '8'}, {n: '이율리', t: '11.3~7', h: '6.5'}, {n: '정유빈', t: '11~7', h: '7'}],
+                    29: [{n: '김나현', t: '10~7', h: '8'}, {n: '송윤서', t: '11.3~7', h: '6.5'}],
+                    30: [{n: '조혜나', t: '11~4', h: '4'}, {n: '주시연', t: '10~7', h: '8'}]
+                }
+            }
+        };
+
+        // 로컬 스토리지 연동 데이터
+        let userAddedRecords = JSON.parse(localStorage.getItem('cafeUserRecords')) || [];
+        let userAddedEmployees = JSON.parse(localStorage.getItem('cafeNewEmps')) || { 'jungcha': [], 'suhyun': [] };
+
+        // [일회성] '김냐옹(테스트 중)' 삭제 처리
+        const testName = '김냐옹(테스트 중)';
+        if(userAddedEmployees['jungcha'].includes(testName)) {
+            userAddedEmployees['jungcha'] = userAddedEmployees['jungcha'].filter(e => e !== testName);
+        }
+        if(userAddedEmployees['suhyun'].includes(testName)) {
+            userAddedEmployees['suhyun'] = userAddedEmployees['suhyun'].filter(e => e !== testName);
+        }
+        userAddedRecords = userAddedRecords.filter(r => r.emp !== testName);
+        localStorage.setItem('cafeNewEmps', JSON.stringify(userAddedEmployees));
+        localStorage.setItem('cafeUserRecords', JSON.stringify(userAddedRecords));
+
+        function saveToLocal() {
+            localStorage.setItem('cafeUserRecords', JSON.stringify(userAddedRecords));
+            localStorage.setItem('cafeNewEmps', JSON.stringify(userAddedEmployees));
+        }
+
+        let currentStoreId = '';
+        let currentEmployee = '';
+        let selectedBreakTime = 0;
+        let toastTimeout;
+
+        function showMessage(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        }
+
+        function goHome() {
+            document.getElementById('main-header').style.display = 'none';
+            document.getElementById('landing-view').style.display = 'flex';
+            document.getElementById('main-view').style.display = 'none';
+            document.getElementById('detail-view').style.display = 'none';
+            document.getElementById('total-view').style.display = 'none';
+        }
+
+        function selectStore(storeId, storeName) {
+            currentStoreId = storeId;
+            document.getElementById('header-title').innerText = storeName + ' 근무 관리';
+            
+            document.getElementById('main-header').style.display = 'block';
+            document.getElementById('landing-view').style.display = 'none';
+            document.getElementById('detail-view').style.display = 'none';
+            document.getElementById('total-view').style.display = 'none';
+            document.getElementById('main-view').style.display = 'flex';
+            
+            renderCalendar(storeId);
+            renderEmployeeList(storeId);
+        }
+
+        function renderCalendar(storeId) {
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            days.forEach(day => { grid.innerHTML += `<div class="cal-head-cell">${day}</div>`; });
+            grid.innerHTML += `<div class="cal-day-cell"></div>`;
+
+            const schedules = storeData[storeId].schedules;
+            for (let i = 1; i <= 30; i++) {
+                let isToday = (i === 7) ? 'today' : '';
+                let dayOfWeek = new Date(`2026-06-${i.toString().padStart(2, '0')}`).getDay();
+                let colorClass = dayOfWeek === 0 ? 'sunday' : (dayOfWeek === 6 ? 'saturday' : '');
+                
+                let badgesHTML = '';
+                
+                // 해당 일자에 사용자가 수동으로 입력한 내역이 있는 직원을 추적 (중복 표시 방지)
+                const manualEmpsOnDay = new Set();
+                const manualBadges = [];
+                
+                userAddedRecords.forEach(rec => {
+                    if (rec.storeId === storeId && rec.month == 6 && rec.day == i) {
+                        manualEmpsOnDay.add(rec.emp);
+                        manualBadges.push(`<div class="badge" style="border:2px solid var(--text-main); background:#fff; font-weight:bold;">${rec.emp} <br> ${rec.timeRange}</div>`);
+                    }
+                });
+
+                // 원본 더미 데이터 (수동 입력 내역이 있으면 스킵!)
+                if(schedules[i]) {
+                    schedules[i].forEach(sch => {
+                        if(!manualEmpsOnDay.has(sch.n)) {
+                            badgesHTML += `<div class="badge">${sch.n} <br> ${sch.t}</div>`;
+                        }
+                    });
+                }
+                
+                // 수동 입력 데이터 추가
+                badgesHTML += manualBadges.join('');
+
+                grid.innerHTML += `
+                    <div class="cal-day-cell">
+                        <div class="date-num ${isToday} ${colorClass}">${i}</div>
+                        ${badgesHTML}
+                    </div>
+                `;
+            }
+        }
+
+        function renderEmployeeList(storeId) {
+            const list = document.getElementById('employee-list');
+            list.innerHTML = '';
+            // 기존 직원 + 새 알바생 목록 합치기
+            const allEmps = [...storeData[storeId].employees, ...(userAddedEmployees[storeId] || [])];
+            const uniqueEmp = [...new Set(allEmps)].sort();
+            
+            uniqueEmp.forEach(emp => {
+                list.innerHTML += `<button class="emp-btn" onclick="openDetail('${emp}')">${emp}</button>`;
+            });
+            
+            // 새 직원 추가 버튼
+            list.innerHTML += `<button class="emp-btn" style="border-style: dashed; color: #555;" onclick="addNewEmployee()">+ 직원 추가</button>`;
+        }
+        
+        function addNewEmployee() {
+            const name = prompt("새로운 알바생(직원)의 이름을 입력하세요:");
+            if(name && name.trim() !== '') {
+                const trimmedName = name.trim();
+                // 기존에 없는 이름일 때만 추가
+                const allEmps = [...storeData[currentStoreId].employees, ...(userAddedEmployees[currentStoreId] || [])];
+                if(allEmps.includes(trimmedName)) {
+                    showMessage("이미 존재하는 이름입니다.");
+                } else {
+                    userAddedEmployees[currentStoreId].push(trimmedName);
+                    saveToLocal();
+                    renderEmployeeList(currentStoreId);
+                    showMessage("새 직원이 추가되었습니다.");
+                }
+            }
+        }
+
+        function openDetail(employeeName) {
+            currentEmployee = employeeName;
+            document.getElementById('selected-employee-name').innerText = employeeName;
+            
+            document.getElementById('input-month').value = '6';
+            document.getElementById('input-day').value = '7';
+            document.getElementById('start-hour').value = '';
+            document.getElementById('start-min').value = '';
+            document.getElementById('end-hour').value = '';
+            document.getElementById('end-min').value = '';
+            document.getElementById('result-box').style.display = 'none';
+            setBreakTime(0, document.querySelectorAll('.break-btn')[0]);
+
+            updateSummaryTable();
+
+            document.getElementById('main-view').style.display = 'none';
+            document.getElementById('detail-view').style.display = 'flex';
+            window.scrollTo(0, 0);
+        }
+
+        function goBackToMainFromDetail() {
+            document.getElementById('detail-view').style.display = 'none';
+            document.getElementById('main-view').style.display = 'flex';
+            renderCalendar(currentStoreId);
+        }
+
+        function goBackToMainFromTotal() {
+            document.getElementById('total-view').style.display = 'none';
+            document.getElementById('main-view').style.display = 'flex';
+            renderCalendar(currentStoreId);
+        }
+
+        function updateSummaryTable() {
+            const tbody = document.getElementById('summary-table-body');
+            tbody.innerHTML = '';
+
+            let totalHours = 0;
+            userAddedRecords.forEach((rec, index) => {
+                if (rec.emp === currentEmployee) {
+                    tbody.innerHTML += `<tr>
+                        <td style="font-weight:bold;">${rec.month}/${rec.day}</td>
+                        <td style="font-weight:bold;">${rec.storeName}</td>
+                        <td style="font-weight:bold;">${rec.hours}h</td>
+                        <td><button class="btn-edit" onclick="editRecord(${index})">수정</button></td>
+                    </tr>`;
+                    totalHours += rec.hours;
+                }
+            });
+
+            document.querySelector('#summary-total-box span').innerText = parseFloat(totalHours.toFixed(1));
+        }
+
+        function setBreakTime(hours, btnElement) {
+            selectedBreakTime = hours;
+            const buttons = document.querySelectorAll('.break-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            if(btnElement) btnElement.classList.add('active');
+            calculateTime();
+        }
+
+        function calculateTime() {
+            const sh = document.getElementById('start-hour').value;
+            const sm = document.getElementById('start-min').value;
+            const eh = document.getElementById('end-hour').value;
+            const em = document.getElementById('end-min').value;
+
+            if (sh==='' || sm==='' || eh==='' || em==='') { 
+                document.getElementById('result-box').style.display = 'none';
+                return; 
+            }
+
+            let startNum = parseFloat(sh) + (parseFloat(sm) / 60);
+            let endNum = parseFloat(eh) + (parseFloat(em) / 60);
+
+            if (endNum < startNum) endNum += 24;
+
+            let diffHours = endNum - startNum;
+            diffHours -= selectedBreakTime;
+
+            const resultBox = document.getElementById('result-box');
+            if (diffHours < 0) { 
+                resultBox.innerHTML = '<span style="color:#D32F2F;">휴게시간 에러</span>';
+                resultBox.style.display = 'block';
+                return; 
+            }
+
+            let decimalTime = Math.round(diffHours * 10) / 10;
+            resultBox.innerHTML = `총 <span id="total-hours" style="font-weight:bold;">${decimalTime}</span>시간`;
+            resultBox.style.display = 'block';
+        }
+
+        function saveRecord() {
+            const sh = document.getElementById('start-hour').value;
+            const sm = document.getElementById('start-min').value;
+            const eh = document.getElementById('end-hour').value;
+            const em = document.getElementById('end-min').value;
+            const month = document.getElementById('input-month').value;
+            const day = document.getElementById('input-day').value;
+            
+            if(!month || !day || sh==='' || sm==='' || eh==='' || em==='') {
+                showMessage("시간을 모두 입력해주세요.");
+                return;
+            }
+            if(document.getElementById('result-box').style.display === 'none' || document.getElementById('result-box').innerHTML.includes('에러')) {
+                showMessage("계산 오류. 시간을 다시 확인하세요.");
+                return;
+            }
+            
+            const hours = parseFloat(document.getElementById('total-hours').innerText) || 0;
+            const timeRange = `${sh}:${sm.padStart(2,'0')}~${eh}:${em.padStart(2,'0')}`;
+
+            if (hours > 0) {
+                userAddedRecords.push({
+                    emp: currentEmployee,
+                    storeId: currentStoreId,
+                    storeName: currentStoreId === 'jungcha' ? '정이 있는 차' : '수헌재',
+                    month: parseInt(month),
+                    day: parseInt(day),
+                    timeRange: timeRange,
+                    breakTime: selectedBreakTime,
+                    hours: hours
+                });
+                
+                saveToLocal(); // 로컬 스토리지에 영구 저장
+            }
+
+            showMessage("✅ 추가되었습니다.");
+            
+            // 입력 폼 리셋
+            document.getElementById('start-hour').value = '';
+            document.getElementById('start-min').value = '';
+            document.getElementById('end-hour').value = '';
+            document.getElementById('end-min').value = '';
+            document.getElementById('result-box').style.display = 'none';
+            setBreakTime(0, document.querySelectorAll('.break-btn')[0]);
+
+            // 요약 즉시 업데이트 및 화면 상단 이동
+            updateSummaryTable();
+            window.scrollTo(0, 0);
+        }
+
+        function editRecord(index) {
+            const rec = userAddedRecords[index];
+            document.getElementById('input-month').value = rec.month;
+            document.getElementById('input-day').value = rec.day;
+            
+            const times = rec.timeRange.split('~');
+            const start = times[0].split(':');
+            const end = times[1].split(':');
+            
+            document.getElementById('start-hour').value = start[0];
+            document.getElementById('start-min').value = start[1];
+            document.getElementById('end-hour').value = end[0];
+            document.getElementById('end-min').value = end[1];
+            
+            const breakBtns = Array.from(document.querySelectorAll('.break-btn'));
+            const matchingBtn = breakBtns.find(b => parseFloat(b.innerText) === rec.breakTime);
+            setBreakTime(rec.breakTime, matchingBtn || breakBtns[0]);
+            
+            // 수정 모드이므로 삭제하고 다시 저장하게 함
+            userAddedRecords.splice(index, 1); 
+            saveToLocal();
+            
+            updateSummaryTable();
+            
+            // 폼 위치로 스크롤
+            document.getElementById('form-card').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // 전체 근무 시간 뷰 로직 (모든 직원 표시, 직접 입력값만 산출)
+        function openTotalView() {
+            document.getElementById('main-view').style.display = 'none';
+            document.getElementById('total-view').style.display = 'flex';
+            window.scrollTo(0, 0);
+
+            const empData = {};
+
+            // 1. 등록된 모든 직원 기본 정보 세팅 (0시간으로 초기화)
+            ['jungcha', 'suhyun'].forEach(storeId => {
+                const allEmps = [...storeData[storeId].employees, ...(userAddedEmployees[storeId] || [])];
+                const uniqueEmps = [...new Set(allEmps)];
+                uniqueEmps.forEach(emp => {
+                    if(!empData[emp]) empData[emp] = { total: 0, shifts: [] };
+                });
+            });
+
+            // 2. 오직 사용자가 직접 "입력한 데이터"만 합산
+            userAddedRecords.forEach(r => {
+                if(!empData[r.emp]) empData[r.emp] = { total: 0, shifts: [] };
+                empData[r.emp].total += parseFloat(r.hours);
+                const sName = r.storeName.includes('정') ? '정차' : '수헌재';
+                empData[r.emp].shifts.push(`└ ${r.month}/${r.day} | ${sName} | ${r.timeRange} | ${r.hours}시간`);
+            });
+
+            // 3. HTML 랜더링
+            const listHtml = Object.keys(empData).sort().map((emp, i) => {
+                const d = empData[emp];
+                const roundedTotal = Math.round(d.total * 10) / 10;
+                const shiftList = d.shifts.length > 0 ? d.shifts.join('<br>') : '<span style="color:#999;">입력된 기록이 없습니다.</span>';
+                
+                return `
+                    <div class="accordion-item">
+                        <div class="accordion-header" onclick="toggleAccordion('acc-${i}', this)">
+                            <span class="emp-name">${emp}</span> 
+                            <span class="arrow">▼</span>
+                        </div>
+                        <div class="accordion-body" id="acc-${i}">
+                            <div style="margin-bottom: 8px; font-weight: bold; color: var(--text-main);">
+                                총 누적: ${roundedTotal}시간
+                            </div>
+                            ${shiftList}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('total-list-container').innerHTML = listHtml;
+        }
+
+        function toggleAccordion(id, el) {
+            const body = document.getElementById(id);
+            const arrow = el.querySelector('.arrow');
+            const empName = el.querySelector('.emp-name');
+            
+            if(body.style.display === 'block') {
+                body.style.display = 'none';
+                arrow.innerText = '▼';
+                arrow.style.color = 'var(--text-main)';
+                empName.style.color = 'var(--text-main)';
+            } else {
+                body.style.display = 'block';
+                arrow.innerText = '▲';
+                arrow.style.color = '#3b82f6'; 
+                empName.style.color = '#3b82f6';
+            }
+        }
+    </script>
+</body>
+</html>
